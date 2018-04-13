@@ -1,0 +1,16 @@
+BoldAsFont=no
+Transparency=low
+FontSmoothing=full
+AllowBlinking=yes
+Locale=en_US
+Charset=UTF-8
+Font=Inconsolata-dz for Powerline
+FontWeight=500
+FontHeight=10
+CursorType=block
+BackgroundColour=25,25,25
+ClipShortcuts=no
+SwitchShortcuts=no
+ZoomShortcuts=no
+AltFnShortcuts=no
+Term=xterm-256color
