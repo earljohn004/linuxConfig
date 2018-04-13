@@ -9,11 +9,18 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'tomasr/molokai'
 Plugin 'SirVer/ultisnips'
-"Plugin 'vim-scripts/snipMate'
 Plugin 'honza/vim-snippets'
 Plugin 'Shougo/neocomplete.vim'
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+Plugin 'godlygeek/tabular'
+Plugin 'tomtom/tcomment_vim'
+"Plugin 'hari-rangarajan/CCTree' "works for C Code only. Function Trace
+"Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'scrooloose/nerdtree'
-
+"Plugin 'vim-scripts/snipMate'
+Plugin 'majutsushi/tagbar'
+"Plugin 'hari-rangarajan/CCTree' "works for C Code only. Function Trace
 call vundle#end()
 filetype plugin indent on
 
@@ -40,11 +47,40 @@ set t_Co=256
 "colorscheme solarized
 colorscheme fu
 set cursorline 
-hi CursorLine cterm=Underline term=underline
-inoremap ( ()<Esc>i
-inoremap { {<CR><CR>}<Esc>ki
-inoremap [ []<Esc>i
-imap jk <Esc>
+"set encoding=euc-jp
+set tags=tags;/ 
+
+"Custom Vim Map
+inoremap jk <Esc>
+map <F7> :tabn <CR>
+nnoremap <silent> <F9> :TagbarToggle<CR>
+
+" nerdtree
+	au BufNewFile,BufRead nerdtree_* set filetype=txt
+	let g:NERDTreeWinPos ="right"
+	let g:NERDTreeCreatePrefix="nerdtree_"
+	let g:NERDTreeDirArrowExpandable="+"
+	let g:NERDTreeDirArrowCollapsible="~"
+	hi Directory guifg=#ff0000 ctermfg=darkcyan
+	autocmd StdinReadPre * let s:std_in=1
+	autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | exe 'NERDTree' | endif
+	autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
+	" F4 to toggle nerdtree
+	noremap <F4> :NERDTreeToggle<CR>
 
 syntax on
+set t_Co=256
+colorscheme fu
+hi CursorLine cterm=Underline term=underline
 let g:neocomplete#enable_at_startup=1
+
+"let  g:UltiSnipsSnippetDirectories=["Ultisnips","~/.vim/bundle/vim-snippets/Ultisnips/"]
+"
+set laststatus=2
+let g:airline#extensions#tabline#enabled=1
+let g:airline#extensions#tabline#show_tabs = 1
+let g:airline_powerline_fonts=1
+let g:airline#extensions#whitespace#enabled = 0
+let g:neocomplete#enable_at_startup=1                                                        
+let g:airline#extensions#tabline#fnamemod = ':t'
+let g:airline_theme='base16_summerfruit'
