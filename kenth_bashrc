@@ -1,0 +1,461 @@
+#!/bin/bash 
+# Source global definitions
+
+if [ -f /etc/bashrc ]; then
+     . /etc/bashrc
+fi
+
+
+#############################################
+#	User specific aliases and functions 	#
+#############################################
+function kill_all ()
+{
+	ps aux | grep crisolok | grep $1 | grep -v grep | awk '{print $2}' | xargs kill -9
+}
+
+function findthis ()
+{
+	find -type f -name "*$1*";
+}
+
+function isscreen
+{
+	if [ -n "$STY" ]; then
+		echo "This is almost, but not quite, certainly like GNU screen."
+	else
+		echo "This is almost, but not quite, certainly unlike GNU screen."
+	fi
+}
+
+function replace ()
+{
+	test -z $3 && \
+	grep -rl $1 ./ | grep -v '/\.[A-Za-z0-9_]*' | xargs sed -i 's/'$1'/'$2'/g' \
+	||  \
+	grep -rl $1 $3| grep -v '/\.[A-Za-z0-9_]*'  | xargs sed -i 's/'$1'/'$2'/g'
+}
+
+function searchfl ()
+{
+	test -z $2 && \
+	grep -rl $1 ./ | grep -v '/\.[A-Za-z0-9_]*' \
+	|| \
+	grep -rl $1 $2 | grep -v '/\.[A-Za-z0-9_]*'
+}
+
+function searchln ()
+{
+	test -z $2 && \
+	grep -r $1 ./ --exclude="\\\.[A-Za-z0-9_]*" \
+	|| \
+	grep -r $1 $2 --exclude= "\\\.[A-Za-z0-9_]*"
+}
+
+function checklic ()
+{
+	case $1 in
+		*Virtualizer*) lmstat -f VHDK.primary | grep start | awk '{print $1 " " $2 " " $7 " " $8 " " $9 " " $10}' ;;
+		*virtualizer*) lmstat -f VHDK.primary | grep start | awk '{print $1 " " $2 " " $7 " " $8 " " $9 " " $10}' ;;
+		*VCS*) lmstat -f VCSRuntime_Net | grep start | awk '{print $1 " " $2 " " $7 " " $8 " " $9 " " $10}' ;;
+		*vcs*) lmstat -f VCSRuntime_Net | grep start | awk '{print $1 " " $2 " " $7 " " $8 " " $9 " " $10}' ;;
+		*) lmstat -a ;;
+
+	esac
+}
+
+function listallcommands ()
+{   
+     echo -n $PATH | xargs -d : -I {} find {} -maxdepth 1 \
+             -type f -printf '%P\n' | sort -u
+}
+
+function mkdircd () { mkdir -p "$@" && eval cd "\"\$$#\""; } 
+
+function pcload ()
+{
+	case $1 in
+		*s*m*1*)
+			case $(hostname) in
+				*sm1*) cat /proc/loadavg ;;
+				*) ssh -2 kddpasicsm1.ktdp.local cat /proc/loadavg 2> /dev/null || \
+					ssh -2 10.191.23.25 cat /proc/loadavg 2> /dev/null ;;
+
+			esac ;;
+		*s*m*2*)
+			case $(hostname) in
+				*sm2*) cat /proc/loadavg ;;
+				*) ssh -2 kddpasicsm2.ktdp.local cat /proc/loadavg 2> /dev/null || \
+					ssh -2 10.191.23.26 cat /proc/loadavg 2> /dev/null ;;
+			esac ;;
+		*s*m*3*)
+			case $(hostname) in
+				*sm3*) cat /proc/loadavg ;;
+				*) ssh -2 kddpasicsm3.ktdp.local cat /proc/loadavg 2> /dev/null || \
+					ssh -2 10.191.23.24 cat /proc/loadavg 2> /dev/null ;;
+			esac ;;
+		*f*l*)
+			case $(hostname) in
+				*fl*) cat /proc/loadavg ;;
+				*) ssh -2 kddpasicfl.ktdp.local cat /proc/loadavg 2> /dev/null || \
+					ssh -2 10.191.23.23 cat /proc/loadavg 2> /dev/null || \
+					ssh -2 10.191.23.34 cat /proc/loadavg 2> /dev/null ;;
+			esac ;;
+		*) cat /proc/loadavg ;;
+	esac
+}
+
+function dirsize ()
+{
+	centos_version=$(cat /etc/redhat-release | awk '{print $3}');
+	if [ $(echo "$centos_version >= 6.0" | bc) -ne 0 ];
+	then
+		##	for Centos 6.x and above:
+		echo "using sort -rh";
+		test -z $1 && \
+	 	du --max-depth=1 -b -h "./" | sort -rh \
+		|| \
+	 	du -h --max-depth=1 -b -h $1 | sort -rh 
+	else 
+		## 	for Centos 5.x and below:
+		echo "using sort -rn";
+		test -z $1 && \
+		du --max-depth=1 "./" | sort -rn | \
+		awk '{ sum=$1 ; hum[1024**3]="T";hum[1024**2]="G";hum[1024]="M"; if(sum<1024) { printf "%.1f%s\t%s\n",sum,"K",$2; } else { for (x=1024**3; x>=1024; x/=1024){ if(sum>=x) { printf "%.1f%s\t%s\n",sum/x,hum[x],$2;break } } } }' \
+		|| \
+		du --max-depth=1 $1 | sort -rn | \
+		awk '{ sum=$1 ; hum[1024**3]="T";hum[1024**2]="G";hum[1024]="M"; if(sum<1024) { printf "%.1f%s\t%s\n",sum,"K",$2; } else { for (x=1024**3; x>=1024; x/=1024){ if(sum>=x) { printf "%.1f%s\t%s\n",sum/x,hum[x],$2;break } } } }' 
+	fi
+
+
+}
+
+function sim1 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm1.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.25 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver1!"
+}
+
+function sm1 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm1.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.25 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver1!"
+}
+
+function sim2 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm2.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.26 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver2!"
+}
+
+function sm2 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm2.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.26 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver2!"
+}
+
+function sim3 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm3.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.24 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver3!"
+}
+
+function sm3 () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/mnt\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicsm3.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.24 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Simserver3!"
+}
+
+function fl () 
+{
+	_pwd=$(echo $PWD | sed "s:^$HOME:\/home\/crisolok:")
+	ssh -2 -Y -t kddpasicfl.ktdp.local "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.34 "cd $_pwd; bash" 2> /dev/null || \
+	ssh -2 -Y -t 10.191.23.23 "cd $_pwd; bash" 2> /dev/null || \
+	echo "Cannot login to Fileserver!"
+}
+
+function listids ()
+{
+	echo "SD20:"
+	echo ""
+	sudo lid -g SD10
+	echo "SD20 interns:"
+	echo ""
+	sudo lid -g SD10-intern
+
+
+}
+
+function cscope_gen()
+{
+	find . -name '*.py' \
+	-o -name '*.java' \
+	-o -iname '*.[CH]' \
+	-o -name '*.cpp' \
+	-o -name '*.cc' \
+	-o -name '*.hpp'  \
+	> cscope.files
+
+	# -b: just build
+	# -q: create inverted index
+	/usr/local/cscope/15.8/bin/cscope -b -q
+}
+
+#################################################
+#	export and source tool related information 	#
+#################################################
+#function export_tools
+#{
+#
+#	export SYNOPSYS=/usr/cadtools/synopsys
+#
+#	export SCL_VER=11.10
+#	export SCL_HOME=$SYNOPSYS/scl/$SCL_VER
+#	export PATH=$SCL_HOME/linux64/bin:$PATH
+#
+#	#export VIRTUALIZER_VER=G-2012.06-SP2
+#	#export VIRTUALIZER_VER=G-2012.06-SP3
+#	#export VIRTUALIZER_VER=H-2013.06-SP2
+#	#export VIRTUALIZER_VER=J-2014.06
+#	export VIRTUALIZER_VER=J-2014.06-3
+#	#export VIRTUALIZER_VER=J-2014.12
+#	#export VIRTUALIZER_VER=K-2015.06
+#	#export VIRTUALIZER_VER=latest
+#	export SLS_HOME=$SYNOPSYS/virtualizer/$VIRTUALIZER_VER
+#
+#	#export VCS_VER=G-2012.06-SP2
+#	export VCS_VER=H-2013.06-SP1
+#	#export VCS_VER=latest
+#	export VCS_HOME=$SYNOPSYS/vcs/$VCS_VER
+#	export VCS_LIC_EXPIRE_WARNING=30
+#	export VCS_ARCH_OVERRIDE=linux
+#	export VCS_HOME=$SYNOPSYS/vcs/$VCS_VER
+#	export PATH=$VCS_HOME/bin:$VCS_HOME/amd64/bin:$PATH
+#	export VG_GNU_PACKAGE=$SYNOPSYS/vcs/gnu/$VCS_VER/linux
+#	#if [ -e $VG_GNU_PACKAGE/source_me.sh ];
+#	#then 
+#	#	source $VG_GNU_PACKAGE/source_me.sh
+#	#fi
+#
+#	#export SYN_VER=H-2013.03-SP4
+#	export SYN_VER=latest
+#	export SYN_HOME=$SYNOPSYS/synthesis/$SYN_VER
+#	export PATH=$SYN_HOME/bin:$PATH
+#
+#	#export CPLUS_INCLUDE_PATH=$SYSTEMC_HOME/include:$CPLUS_INCLUDE_PATH
+#	#export LD_LIBRARY_PATH=$SYSTEMC_HOME/lib-linux64:$LD_LIBRARY_PATH
+#	#export LD_LIBRARY_PATH=$BOOST_HOME/lib:$LD_LIBRARY_PATH
+#
+#	export DESIGNWARE_HOME=$SYNOPSYS/designware
+#
+#	# Setup Spyglass tools
+#	#export ATRENTA=/usr/cadtools/atrenta
+#	#export GENSYS_VER=5.2.0.3
+#	#export GENSYS_HOME=$ATRENTA/spyglass/GenSys-$GENSYS_VER/SPYGLASS_HOME
+#
+#	# Source AMBA Designer
+#	#export MXSETUP_QUIET=1
+#	#export AMBADESIGNER_VER=r3p1
+#	#if [ -e /usr/cadtools/ARM/AMBADesigner_$AMBADESIGNER_VER/etc/setup.sh ];
+#	#then
+#	#	source /usr/cadtools/ARM/AMBADesigner_$AMBADESIGNER_VER/etc/setup.sh 
+#	#fi
+#
+#	#export FORTE_HOME=/usr/cadtools/forte
+#	## source Forte Tools Package
+#	#if [ -e $FORTE_HOME/tools.5.0b2.Linux.SC23.gcc446/setup.sh ];
+#	#then 
+#	#	source $FORTE_HOME/tools.5.0b2.Linux.SC23.gcc446/setup.sh
+#	#fi
+#
+#	## source Cynthesizer Package
+#	#if [ -e $FORTE_HOME/bds.Linux.509/setup.sh ]; 
+#	#then
+#	#	source $FORTE_HOME/bds.Linux.509/setup.sh
+#	#fi
+#
+#	#export KLOCWORK_HOME=/usr/cadtools/klocwork
+#	#export PATH=$KLOCWORK_HOME/cmdtool/bin:$PATH
+#
+#	#export JEDA_HOME=/usr/cadtools/hdlab/jeda/v1.3.3
+#	#source $JEDA_HOME/setenv/init.sh --gcc34
+#}
+
+#################################
+#		set terminal prompt 	#
+#################################
+#PS1='\n\e[1;32m[\u@\h \W] $ \e[m\n' 
+PS1='\n\e[1;32m[kenth@\h \W] $ \e[m\n' 
+
+#################################
+#		add license path 		#
+#################################
+export SNPSLMD_LICENSE_FILE=27000@kddpasicfl.ktdp.local:27000@10.191.23.34:27000@10.191.23.23:4313@earth.km.local:27000@10.181.34.41:27000@10.181.34.42
+# export LM_LICENSE_FILE=4313@earth.km.local:27000@10.181.34.41
+
+#################################
+#	add all commands to PATH 	#
+#################################
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
+
+
+################
+#	set TMPDIR #
+################
+export TMPDIR=$HOME/.tmp
+
+#####################
+#	CVSROOT PATH 	#
+#####################
+export CVS_RSH=ssh
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/virtual_env_panther/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/video_renew/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/plp_virtual_env/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/virtual_env_monaco/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/virtual_env_gazelle/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/virtual_env/CVS_DB
+#export CVSROOT=:ext:kddp_crisolokenth@10.181.34.217:/export/project1/ASIC/vanguard/CVS_DB
+
+#####################
+#	set language 	#
+#####################
+#export LANG=en_US.utf8
+#export LC_ALL=en_US.utf8
+
+#####################
+#	LD LIBRARY PATH 	#
+#####################
+#export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
+
+#####################
+#	LD RUN PATH 	#
+#####################
+#export LD_RUN_PATH=/usr/local/lib:$LD_RUN_PATH
+#export LD_RUN_PATH=/usr/local/lib64:$LD_RUN_PATH
+
+#################################
+#	add local apps to path 		#
+#################################
+# export PATH=$HOME/.LOCAL_APPS/bin:$PATH
+# export PATH=/usr/local/python/2.7.9/bin:$PATH
+# export PATH=/usr/local/lua/5.1.4/bin:$PATH
+# export PATH=/usr/local/vim/8.0/bin:$PATH
+# export PATH=/usr/local/git/2.8.3/bin:$PATH
+# export PATH=/usr/local/tmux/2.3/bin:$PATH
+# export PATH=/usr/local/ctags/5.8/bin:$PATH
+# export PATH=/usr/local/cscope/15.8/bin:$PATH
+# export PATH=/usr/local/tcl/8.5.19/bin:$PATH
+
+#################################
+#	add local apps to manpath 	#
+#################################
+# export MANPATH=$HOME/.LOCAL_APPS/share/man:$MANPATH
+# export MANPATH=/usr/local/python/2.7.9/share/man:$MANPATH
+# export MANPATH=/usr/local/lua/5.1.4/man:$MANPATH
+# export MANPATH=/usr/local/git/2.8.3/share/man:$MANPATH
+# export MANPATH=/usr/local/vim/8.0/share/man:$MANPATH
+# export MANPATH=/usr/local/tmux/2.3/share/man:$MANPATH
+# export MANPATH=/usr/local/ctags/5.8/share/man:$MANPATH
+# export MANPATH=/usr/local/cscope/15.8/share/man:$MANPATH
+# export MANPATH=/usr/local/tcl/8.5.19/man:$MANPATH
+
+source /usr/local/modules/tcl/1.832/init/bash
+source /usr/local/modules/tcl/1.832/init/bash_completion
+
+#################################################
+#	set server-specific alias and shortcuts		#
+#################################################
+case $(hostname) in
+	*sm*) 
+		export SHARE='/mnt/home/share'
+		#export PATH=$HOME/.LOCAL_APPS_SIM_ONLY/bin:$PATH
+		#export MANPATH=$HOME/.LOCAL_APPS_SIM_ONLY/man:$MANPATH
+		#export PATH=$SHARE/etcinstall/bin:$PATH
+		#alias gitk='git fetch --prune /mnt/home/share/video_img && gitk --all &'
+
+	;;
+
+	*fl*)
+		export SHARE='/home/share'
+		export SYNOPSYS=/usr/cadtools/synopsys
+		export SCL_VER=11.10
+		export SCL_HOME=$SYNOPSYS/scl/$SCL_VER
+		export PATH=$SCL_HOME/linux64/bin:$PATH
+		# export PATH=$HOME/.LOCAL_APPS_FL_ONLY/bin:$PATH
+		# export MANPATH=$HOME/.LOCAL_APPS_FL_ONLY/man:$MANPATH
+		# alias gitk='git fetch --prune && gitk --all &'
+	;;
+esac
+
+#case "$-" in 
+#	*i*) case $(hostname) in
+#			#*sm*) source $SLS_HOME/SLS/linux/setup.sh -vhdk && alias tlmc='tlmcreator';;
+#			#*sm*) source $SLS_HOME/SLS/linux/setup.sh -vauth && alias tlmc='tlmcreator';;
+#			#*sm*) source $SLS_HOME/SLS/linux/setup.sh -vsdk && alias tlmc='tlmcreator';;
+#		esac ;;
+#	*);;
+#esac
+
+#####################
+#	set aliases 	#
+#####################
+alias cls='clear'
+alias remake='make clean; make'
+alias ls='ls -lCF --color=auto'
+alias ll='ls -lh'
+alias lll='ls -alh'
+alias l.='ls -lhd .*'
+alias ll.='ls -ld .*'
+alias vi='vim'
+alias df='df -h'
+alias mkdir='mkdir -p'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias share='cd $SHARE'
+alias listvnc='ps -elf | grep crisolo | grep Xvnc | grep -v grep'
+alias startvnc='vncserver -geometry 1920x1017'
+alias fusion='ssh -2 -Y kddp_crisolokenth@fusion2.km.local'
+alias htop='xterm -title "$(hostname)" htop &'
+alias yumcd='yum --disablerepo=\* --enablerepo=c6-media'
+
+
+#####################
+#	set TERM info 	#
+#####################
+if [ -e /usr/share/terminfo/x/xterm-256color ]; then
+	export TERM='xterm-256color'
+else
+	export TERM='xterm-color'
+fi
+
+
+#############################
+#	cleanup of variables	#
+#############################
+export PATH=$(echo "$PATH" | awk -v RS=':' -v ORS=":" '!a[$1]++{if (NR > 1) printf ORS; printf $a[$1]}')
+export MANPATH=$(echo "$MANPATH" | awk -v RS=':' -v ORS=":" '!a[$1]++{if (NR > 1) printf ORS; printf $a[$1]}')
+export LD_LIBRARY_PATH=$(echo "$LD_LIBRARY_PATH" | awk -v RS=':' -v ORS=":" '!a[$1]++{if (NR > 1) printf ORS; printf $a[$1]}')
+
+
+# # added by Anaconda3 installer
+# export PATH="/home/crisolok/anaconda3/bin:$PATH"
+
+
+[ -f /usr/local/fzf/fzf.bash ] && source /usr/local/fzf/fzf.bash
+
