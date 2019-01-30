@@ -7,8 +7,8 @@ call vundle#begin()
 " " alternatively, pass a path where Vundle should install plugins
 " "call vundle#begin('~/some/path/here')
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'tomasr/molokai'
-Plugin 'SirVer/ultisnips'
+"Plugin 'tomasr/molokai'
+" Plugin 'SirVer/ultisnips'
 Plugin 'honza/vim-snippets'
 Plugin 'Shougo/neocomplete.vim'
 Plugin 'vim-airline/vim-airline'
@@ -69,7 +69,9 @@ nnoremap <silent> <F9> :TagbarToggle<CR>
 	noremap <F4> :NERDTreeToggle<CR>
 
 syntax on
-set t_Co=256
+" set t_Co=256
+set term=screen-256color
+" colorscheme fu
 colorscheme fu
 hi CursorLine cterm=Underline term=underline
 let g:neocomplete#enable_at_startup=1
