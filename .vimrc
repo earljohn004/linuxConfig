@@ -21,6 +21,7 @@ Plugin 'scrooloose/nerdtree'
 "Plugin 'vim-scripts/snipMate'
 Plugin 'majutsushi/tagbar'
 "Plugin 'hari-rangarajan/CCTree' "works for C Code only. Function Trace
+Plugin 'junegunn/fzf'
 call vundle#end()
 filetype plugin indent on
 
@@ -67,6 +68,9 @@ nnoremap <silent> <F9> :TagbarToggle<CR>
 	autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
 	" F4 to toggle nerdtree
 	noremap <F4> :NERDTreeToggle<CR>
+
+" FZF Binding
+	noremap <F5> :FZF<CR>
 
 syntax on
 " set t_Co=256
