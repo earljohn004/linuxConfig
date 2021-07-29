@@ -4,7 +4,7 @@ PS1='\[\e[1;33m\][ _WIN_ \w ]\[\e[1;34m\] \u \n$ \[\033[0m\]'
 export LS_COLORS=':di=01;4;32;7'
 
 
-#set term=xterm-256color
+export term=xterm-256color
 
 #USER DEFINED ALIAS
 alias ls="ls --color=auto"
